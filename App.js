@@ -259,12 +259,18 @@ export default function App() {
             style={styles.content}
             imageStyle={styles.backgroundImage}
           >
-            <View style={[styles.bannerContainer, { opacity: currentPage === 2 ? 0 : 1 }]}>
+            <Animated.View style={[styles.bannerContainer, {
+              opacity: scrollX.interpolate({
+                inputRange: [screenWidth * 1, screenWidth * 1.5, screenWidth * 2],
+                outputRange: [1, 1, 0],
+                extrapolate: 'clamp',
+              })
+            }]}>
               <Animated.Image
                 source={require('./assets/banner.png')}
                 style={[styles.floatingLogo, { transform: [{ translateX }] }]}
               />
-            </View>
+            </Animated.View>
 
             <Animated.ScrollView
               horizontal
@@ -466,7 +472,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
 
     top: 0,
-    width: 60,
+    width: 55,
     height: 50,
     marginTop: -15,
     resizeMode: 'contain',
@@ -500,6 +506,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccc',
     marginHorizontal: 4,
     overflow: 'hidden',
+    marginBottom: 15
   },
   activeDot: {
     backgroundColor: '#555',
