@@ -1,0 +1,20 @@
+{
+  "name": "moBiLET",
+  "short_name": "moBiLET",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1161a6",
+  "theme_color": "#1161a6",
+  "icons": [
+    {
+      "src": "./mobilet.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./mobilet.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

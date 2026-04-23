@@ -122,8 +122,12 @@ const PseudoQRCode = () => {
   }
 
   return (
-    <View style={{ width: QR_DISPLAY * 0.65, height: QR_DISPLAY * 0.65, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', backgroundColor: '#fff' }}>
-      <Svg width={QR_DISPLAY} height={QR_DISPLAY} style={{ transform: [{ scale: 0.65 }] }}>
+    <View style={{ backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
+      <Svg
+        width={QR_DISPLAY * 0.65}
+        height={QR_DISPLAY * 0.65}
+        viewBox={`0 0 ${QR_DISPLAY} ${QR_DISPLAY}`}
+      >
         {rects}
       </Svg>
     </View>
@@ -175,7 +179,7 @@ export default function App() {
     const validityDateObj = new Date(buyDateObj.getTime() + 45 * 60000);
 
     const pad = (n) => n.toString().padStart(2, '0');
-    const formatDate = (date) => 
+    const formatDate = (date) =>
       `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}r. ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 
     const line = Math.floor(Math.random() * (310 - 302 + 1)) + 302;
@@ -231,8 +235,7 @@ export default function App() {
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="#1161a6" />
-      <SafeAreaView style={{ flex: 0, backgroundColor: '#1161a6' }} />
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
@@ -258,25 +261,29 @@ export default function App() {
           >
             <View style={[styles.bannerContainer, { opacity: currentPage === 2 ? 0 : 1 }]}>
               <Animated.Image
-                source={{ uri: 'https://um.gorzow.pl/files/ban/banner-1.png?ts=1607687487' }}
+                source={require('./assets/banner.png')}
                 style={[styles.floatingLogo, { transform: [{ translateX }] }]}
               />
             </View>
 
             <Animated.ScrollView
               horizontal
-              pagingEnabled={false}
-              snapToInterval={screenWidth}
-              snapToAlignment="start"
-              decelerationRate="fast"
-              disableIntervalMomentum={true}
+              pagingEnabled={true}
               showsHorizontalScrollIndicator={false}
               onScroll={onScrollEvent}
               scrollEventThrottle={16}
-              contentContainerStyle={styles.contentContainer}
+              contentContainerStyle={[styles.contentContainer, { scrollSnapType: 'x mandatory' }]}
             >
               {pages.map((pageIndex) => (
-                <View key={pageIndex} style={{ width: screenWidth, alignItems: 'center' }}>
+                <View
+                  key={pageIndex}
+                  style={{
+                    width: screenWidth,
+                    flexShrink: 0,
+                    alignItems: 'center',
+                    scrollSnapAlign: 'start'
+                  }}
+                >
                   <View style={styles.qrContainer}>
                     <View style={styles.fakeQrWrapper}>
                       {pageIndex === 0 && (
@@ -309,12 +316,12 @@ export default function App() {
                         </>
                       )}
                       {pageIndex === 2 && (
-                        <>
+                        <View style={{ alignItems: 'left' }}>
                           <Text style={[styles.pageText, styles.pageTitle, { marginBottom: 50 }]}>Gorzów Wlkp. Miasto</Text>
                           <View style={[styles.qrCodeContainer, { marginBottom: 45 }]}>
                             <PseudoQRCode />
                           </View>
-                        </>
+                        </View>
                       )}
                     </View>
                   </View>
@@ -330,7 +337,7 @@ export default function App() {
             </View>
           </ImageBackground>
         </View>
-      </SafeAreaView>
+      </View>
     </>
   );
 }
@@ -340,7 +347,8 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff'
+    backgroundColor: '#1161a6',
+    touchAction: 'manipulation',
   },
   container: {
     flex: 1,
@@ -376,11 +384,12 @@ const styles = StyleSheet.create({
     fontSize: 13
   },
   header: {
-    height: Platform.OS === 'ios' ? 40 : 70,
+    height: Platform.OS === 'ios' ? 88 : 70,
+    paddingTop: Platform.OS === 'ios' ? 44 : 0,
     backgroundColor: '#1161a6',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     paddingHorizontal: 1,
     paddingBottom: 7,
     zIndex: 10,
@@ -442,6 +451,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flexGrow: 1,
+    scrollSnapType: 'x mandatory',
   },
   bannerContainer: {
     position: 'absolute',
@@ -454,8 +464,9 @@ const styles = StyleSheet.create({
   },
   floatingLogo: {
     position: 'absolute',
+
     top: 0,
-    width: 50,
+    width: 60,
     height: 50,
     marginTop: -15,
     resizeMode: 'contain',
