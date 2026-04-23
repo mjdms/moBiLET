@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccc',
     marginHorizontal: 4,
     overflow: 'hidden',
-    marginBottom: 15
+    marginBottom: 35
   },
   activeDot: {
     backgroundColor: '#555',
