@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
     fontSize: 13
   },
   header: {
-    height: Platform.OS === 'ios' ? 88 : 70,
+    height: Platform.OS === 'ios' ? 94 : 50,
     paddingTop: Platform.OS === 'ios' ? 44 : 0,
     backgroundColor: '#1161a6',
     flexDirection: 'row',
