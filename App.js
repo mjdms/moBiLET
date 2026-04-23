@@ -259,12 +259,12 @@ export default function App() {
             style={styles.content}
             imageStyle={styles.backgroundImage}
           >
-            <Animated.View style={[styles.bannerContainer, {
+            <Animated.View style={[styles.bannerContainer, { 
               opacity: scrollX.interpolate({
-                inputRange: [screenWidth * 1, screenWidth * 1.5, screenWidth * 2],
-                outputRange: [1, 1, 0],
+                inputRange: [screenWidth * 1.49, screenWidth * 1.5],
+                outputRange: [1, 0],
                 extrapolate: 'clamp',
-              })
+              }) 
             }]}>
               <Animated.Image
                 source={require('./assets/banner.png')}
