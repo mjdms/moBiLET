@@ -1,0 +1,12 @@
+{
+    "buildCommand": "npx expo export --platform web && cp public/manifest.json dist/ && cp public/service-worker.js dist/ && cp public/mobilet.png dist/ && node pwa-inject.js",
+    "outputDirectory": "dist",
+    "cleanUrls": true,
+    "framework": null,
+    "rewrites": [
+        {
+            "source": "/:path*",
+            "destination": "/"
+        }
+    ]
+}

@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "moBiLET",
+    "slug": "expo-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/mobilet.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/mobilet.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1161a6"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/mobilet.png",
+        "backgroundColor": "#1161a6"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/mobilet.png",
+      "backgroundColor": "#1161a6",
+      "themeColor": "#1161a6",
+      "name": "moBiLET",
+      "shortName": "moBiLET",
+      "display": "standalone",
+      "orientation": "portrait",
+      "startUrl": "/"
+    }
+  }
+}
