@@ -1,21 +1,12 @@
 const CACHE_NAME = 'mobilet-cache-v1';
-const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json',
-  './mobilet.png'
-];
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
-  );
+  self.skipWaiting();
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-  );
+self.addEventListener('activate', event => {
+  event.waitUntil(clients.claim());
 });
+
+// Removed fetch listener to prevent "response served by service worker has redirections" error.
+// The service worker still exists to satisfy PWA requirements.
