@@ -390,14 +390,14 @@ const styles = StyleSheet.create({
     fontSize: 13
   },
   header: {
-    height: Platform.OS === 'ios' ? 94 : 50,
+    height: Platform.OS === 'ios' ? 94 : 40,
     paddingTop: Platform.OS === 'ios' ? 44 : 0,
     backgroundColor: '#1161a6',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 1,
-    paddingBottom: 7,
+    paddingBottom: 3,
     zIndex: 10,
   },
   subHeader: {
