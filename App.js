@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1161a6',
     touchAction: 'manipulation',
-    marginTop: 20
+    marginTop: 40
   },
   container: {
     flex: 1,
