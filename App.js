@@ -355,11 +355,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1161a6',
     touchAction: 'manipulation',
-    marginTop: 70
+    marginTop: 60
   },
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    paddingBottom: 30
   },
   qrCodeContainer: {
     backgroundColor: '#fff',
