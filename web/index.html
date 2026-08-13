@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#1161a6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="moBiLET" />
+    <link rel="apple-touch-icon" href="/mobilet.png" />
+    <title>moBiLET</title>
+    <style>
+      /* === Safari iOS full-height fix === */
+      /* Must be here BEFORE React renders, not injected via JS */
+      html {
+        /* Step 1: fallback for older browsers */
+        height: 100%;
+        /* Step 2: the ONLY thing that works on Safari iOS */
+        height: -webkit-fill-available;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        height: 100%;
+        /* Trick: min-height allows body to grow past viewport */
+        min-height: 100vh;
+        /* The magic Safari fix */
+        min-height: -webkit-fill-available;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #ffffff;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        overscroll-behavior-y: none;
+      }
+
+      #root {
+        /* Fill parent body */
+        height: 100%;
+        height: -webkit-fill-available;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background-color: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
