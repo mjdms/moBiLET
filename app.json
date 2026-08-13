@@ -23,6 +23,7 @@
       "edgeToEdgeEnabled": true
     },
     "web": {
+      "bundler": "metro",
       "favicon": "./assets/mobilet.png",
       "backgroundColor": "#1161a6",
       "themeColor": "#1161a6",

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   StyleSheet, Text, View, Image, TouchableOpacity,
   SafeAreaView, Platform, StatusBar,
-  Animated, Easing, Dimensions, ImageBackground
+  Animated, Easing, useWindowDimensions, ScrollView
 } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
 
@@ -96,11 +96,11 @@ function buildPseudoQR(modules) {
 
 // ─── React Native QR component ───────────────────────────────────────────────
 
-const MODULE_COUNT = 41; // QR version 6  (4×6+17 = 41) — pasuje do ~100-znakowego URL
-const MODULE_SIZE = 6;  // integer → zero przerw między modułami
-const QR_DISPLAY = MODULE_COUNT * MODULE_SIZE; // 246px
+const MODULE_COUNT = 41;
+const MODULE_SIZE = 6;
+const QR_DISPLAY = MODULE_COUNT * MODULE_SIZE;
 
-const PseudoQRCode = () => {
+const PseudoQRCode = ({ size = 230 }) => {
   const grid = useMemo(() => buildPseudoQR(MODULE_COUNT), []);
 
   const rects = [];
@@ -122,10 +122,10 @@ const PseudoQRCode = () => {
   }
 
   return (
-    <View style={{ backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ backgroundColor: '#fff', padding: 8, alignItems: 'center', justifyContent: 'center' }}>
       <Svg
-        width={QR_DISPLAY * 0.65}
-        height={QR_DISPLAY * 0.65}
+        width={size}
+        height={size}
         viewBox={`0 0 ${QR_DISPLAY} ${QR_DISPLAY}`}
       >
         {rects}
@@ -134,103 +134,106 @@ const PseudoQRCode = () => {
   );
 };
 
-// ─── Dot Component ─────────────────────────────────────────────────────────────
-
-const Dot = ({ index, scrollX, screenWidth }) => {
-  const opacity = scrollX.interpolate({
-    inputRange: [
-      (index - 1) * screenWidth,
-      index * screenWidth - (screenWidth * 0.1), // Pojawia się bardzo szybko, gdy zbliża się do środka
-      index * screenWidth,
-      index * screenWidth + (screenWidth * 0.8), // Powoli zanika przy odsuwaniu
-      (index + 1) * screenWidth,
-    ],
-    outputRange: [0, 1, 1, 0, 0],
-    extrapolate: 'clamp',
-  });
-
-  return (
-    <View style={styles.dot}>
-      <Animated.View style={[styles.activeDot, { opacity }]} />
-    </View>
-  );
-};
-
 // ─── App ─────────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const screenWidth = Dimensions.get('window').width;
-  const translateX = useRef(new Animated.Value(-150)).current;
-  const scrollX = useRef(new Animated.Value(0)).current;
-  const [currentPage, setCurrentPage] = useState(0);
-  const [randomData, setRandomData] = useState({
-    lineNum: '---',
-    ticketId: '-----',
-    currentNumber: '---------',
-    buyDate: '--.--.----r. --:--:--',
+  const { width: screenWidth } = useWindowDimensions();
+  const cardWidth = useMemo(() => Math.min(screenWidth * 0.96, 380), [screenWidth]);
+  const translateX = useRef(new Animated.Value(-68)).current;
+
+  const [cancellationTimeObj, setCancellationTimeObj] = useState(null);
+  const [ticketData, setTicketData] = useState({
+    lineNum: '638',
+    cancellationDate: '--.--.----r. --:--:--',
     validityDate: '--.--.----r. --:--:--',
+    buyDate: '--.--.----r. --:--:--',
+    currentNumber: '---------',
+    controlNumber: '-----',
   });
+
+  const [upTimerStr, setUpTimerStr] = useState('10:00');
+  const [downTimerStr, setDownTimerStr] = useState('35:00');
 
   useEffect(() => {
     const now = new Date();
-    // 10 minutes ago
-    const buyDateObj = new Date(now.getTime() - 10 * 60000);
-    // buyDate + 45 minutes
-    const validityDateObj = new Date(buyDateObj.getTime() + 45 * 60000);
+    // Czas skasowania = teraz minus 10 minut
+    const cancellationDateObj = new Date(now.getTime() - 10 * 60000);
+    setCancellationTimeObj(cancellationDateObj);
+
+    // Czas zakupu = Czas skasowania minus 30 sekund
+    const buyDateObj = new Date(cancellationDateObj.getTime() - 30 * 1000);
+    // Ważny do = Czas skasowania + 45 minut
+    const validityDateObj = new Date(cancellationDateObj.getTime() + 45 * 60000);
 
     const pad = (n) => n.toString().padStart(2, '0');
     const formatDate = (date) =>
       `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}r. ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 
-    const line = Math.floor(Math.random() * (310 - 302 + 1)) + 302;
-    const tId = Math.floor(Math.random() * (69999 - 60000 + 1)) + 60000;
+    // Numer bieżący (9 cyfr)
     const cNum = Math.floor(Math.random() * 900000000) + 100000000;
+    // Numer kontrolny (5 cyfr 25000-80000)
+    const ctrlNum = Math.floor(Math.random() * (80000 - 25000 + 1)) + 25000;
 
-    setRandomData({
-      lineNum: line.toString(),
-      ticketId: tId.toString(),
-      currentNumber: cNum.toString(),
-      buyDate: formatDate(buyDateObj),
+    setTicketData({
+      lineNum: '638',
+      cancellationDate: formatDate(cancellationDateObj),
       validityDate: formatDate(validityDateObj),
+      buyDate: formatDate(buyDateObj),
+      currentNumber: cNum.toString(),
+      controlNumber: ctrlNum.toString(),
     });
   }, []);
 
+  // Live Timer effect (odliczanie w górę od 0:00->45:00 i w dół od 45:00->0:00)
   useEffect(() => {
-    const loop = Animated.loop(
+    if (!cancellationTimeObj) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const elapsedSec = Math.floor((now.getTime() - cancellationTimeObj.getTime()) / 1000);
+
+      const countUpSec = Math.min(Math.max(elapsedSec, 0), 45 * 60);
+      const countDownSec = Math.max(45 * 60 - elapsedSec, 0);
+
+      const pad = (n) => n.toString().padStart(2, '0');
+
+      const upMin = Math.floor(countUpSec / 60);
+      const upSec = countUpSec % 60;
+      setUpTimerStr(`${upMin}:${pad(upSec)}`);
+
+      const downMin = Math.floor(countDownSec / 60);
+      const downSec = countDownSec % 60;
+      setDownTimerStr(`${downMin}:${pad(downSec)}`);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [cancellationTimeObj]);
+
+  const bannerStyle = useMemo(() => ({
+    width: screenWidth,
+    marginLeft: -((screenWidth - cardWidth) / 2 + 14),
+  }), [screenWidth, cardWidth]);
+
+  useEffect(() => {
+    const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(translateX, {
           toValue: screenWidth,
           duration: 3500,
           easing: Easing.linear,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(translateX, {
-          toValue: -150,
+          toValue: -68,
           duration: 0,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ])
     );
-    loop.start();
+    animation.start();
 
-    return () => loop.stop();
+    return () => animation.stop();
   }, [translateX, screenWidth]);
-
-  const onScrollEvent = Animated.event(
-    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-    {
-      useNativeDriver: true,
-      listener: (event) => {
-        const offsetX = event.nativeEvent.contentOffset.x;
-        const page = Math.round(offsetX / screenWidth);
-        if (page !== currentPage) {
-          setCurrentPage(page);
-        }
-      }
-    }
-  );
-
-  const pages = [0, 1, 2];
 
   return (
     <>
@@ -249,99 +252,104 @@ export default function App() {
             <View style={styles.placeholder} />
           </View>
 
-          <View style={styles.subHeader}>
-            <Text style={styles.subHeaderText}>Miasto Gorzów Wlkp. Komunikacja miejska</Text>
-          </View>
-
-          {/* Swipeable content */}
-          <ImageBackground
-            source={require('./assets/background.png')}
-            style={styles.content}
-            imageStyle={styles.backgroundImage}
+          {/* Single Scrollable Ticket Page */}
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
           >
-            <Animated.View style={[styles.bannerContainer, {
-              opacity: scrollX.interpolate({
-                inputRange: [screenWidth * 1.49, screenWidth * 1.5],
-                outputRange: [1, 0],
-                extrapolate: 'clamp',
-              })
-            }]}>
-              <Animated.Image
-                source={require('./assets/banner.png')}
-                style={[styles.floatingLogo, { transform: [{ translateX }] }]}
-              />
-            </Animated.View>
+            <View style={[styles.ticketContainer, { width: cardWidth }]}>
+              {/* 1. Latające logo od lewej do prawej na CAŁĄ SZEROKOŚĆ EKRANU */}
+              <View style={[styles.bannerWrapper, bannerStyle]}>
+                <Animated.Image
+                  source={require('./assets/banner.png')}
+                  style={[styles.floatingLogo, { transform: [{ translateX }] }]}
+                />
+              </View>
 
-            <Animated.ScrollView
-              horizontal
-              pagingEnabled={true}
-              showsHorizontalScrollIndicator={false}
-              onScroll={onScrollEvent}
-              scrollEventThrottle={16}
-              contentContainerStyle={[styles.contentContainer, { scrollSnapType: 'x mandatory' }]}
-            >
-              {pages.map((pageIndex) => (
-                <View
-                  key={pageIndex}
-                  style={{
-                    width: screenWidth,
-                    flexShrink: 0,
-                    alignItems: 'center',
-                    scrollSnapAlign: 'start'
-                  }}
-                >
-                  <View style={styles.qrContainer}>
-                    <View style={styles.fakeQrWrapper}>
-                      {pageIndex === 0 && (
-                        <>
-                          <Text style={[styles.pageText, styles.pageTitle]}>Gorzów Wlkp. Miasto</Text>
-                          <Text style={[styles.pageText, styles.pageSubtitle]}>ticket:</Text>
-                          <Text style={[styles.pageText]}>45 min jedn. Ulg. w gr.adm.</Text>
-                          <Text style={[styles.pageText]}>Miasta Gorzów Wlkp. Mia...</Text>
+              {/* 2. Kod QR duży */}
+              <View style={styles.qrSection}>
+                <PseudoQRCode size={255} />
+              </View>
 
-                          <Text style={[styles.pageText, styles.pageSubtitle, { marginTop: 30, marginBottom: 3 }]}>line number:</Text>
-                          <Text style={[styles.pageText]}>{randomData.lineNum}</Text>
-                          <Text style={[styles.pageText, styles.pageSubtitle, { marginTop: 5, marginBottom: 3 }]}>the term of validity:</Text>
-                          <Text style={[styles.pageText, { fontSize: 24 }]}>{randomData.validityDate}</Text>
-                          <View style={{ paddingHorizontal: 10 }}>
-                            <Text style={[styles.ticketNumber]}>{randomData.ticketId}</Text>
-                          </View>
-                        </>
-                      )}
-                      {pageIndex === 1 && (
-                        <>
-                          <Text style={[styles.pageText, styles.pageTitle]}>Gorzów Wlkp. Miasto</Text>
-                          <Text style={[styles.pageText, styles.pageSubtitle]}>price:</Text>
-                          <Text style={[styles.pageText]}>2.50 PLN</Text>
-
-                          <Text style={[styles.pageText, styles.pageSubtitle, { marginTop: 50 }]}>current number:</Text>
-                          <Text style={[styles.pageText, { fontSize: 25 }]}>{randomData.currentNumber}</Text>
-                          <View style={{ paddingHorizontal: 10 }}>
-                            <Text style={[styles.ticketNumber, { marginTop: 80, marginBottom: 50 }]}>{randomData.buyDate}</Text>
-                          </View>
-                        </>
-                      )}
-                      {pageIndex === 2 && (
-                        <View style={{ alignItems: 'left' }}>
-                          <Text style={[styles.pageText, styles.pageTitle, { marginBottom: 50 }]}>Gorzów Wlkp. Miasto</Text>
-                          <View style={[styles.qrCodeContainer, { marginBottom: 45 }]}>
-                            <PseudoQRCode />
-                          </View>
-                        </View>
-                      )}
-                    </View>
-                  </View>
+              {/* 3. Nazwa z timerem w tej samej linii */}
+              <View style={[styles.fieldSection, { marginTop: 10, marginBottom: 18 }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
+                  <Text style={styles.label}>Nazwa:</Text>
+                  <Text style={styles.timerText}>{upTimerStr}</Text>
                 </View>
-              ))}
-            </Animated.ScrollView>
+                <Text style={styles.valueTitle}>Miasto Gorzów Wlkp. Komunikacja miejska</Text>
+              </View>
 
-            {/* Pagination Dots with custom enter/exit timing */}
-            <View style={styles.pagination}>
-              {pages.map((i) => (
-                <Dot key={i} index={i} scrollX={scrollX} screenWidth={screenWidth} />
-              ))}
+              {/* 4. Bilet */}
+              <View style={styles.fieldSection}>
+                <Text style={[styles.label, { marginBottom: 8 }]}>Bilet:</Text>
+                <Text style={styles.valueText}>45 min jedn. Ulg. w gr.adm. Miasta Gorzów</Text>
+                <Text style={styles.valueText}>Wlkp. Miasto</Text>
+              </View>
+
+              {/* 5. line number */}
+              <View style={styles.fieldSection}>
+                <Text style={[styles.label, { marginBottom: 3 }]}>line number:</Text>
+                <Text style={styles.valueText}>{ticketData.lineNum}</Text>
+              </View>
+
+              {/* 6. Czas skasowania */}
+              <View style={styles.fieldSection}>
+                <Text style={styles.label}>Czas skasowania:</Text>
+                <Text style={[styles.valueText]}>{ticketData.cancellationDate}</Text>
+              </View>
+
+              {/* Czas ważności (odliczanie w dół) */}
+              <View style={styles.fieldSection}>
+                <Text style={styles.label}>Czas ważności:</Text>
+                <Text style={styles.valueText}>{downTimerStr}</Text>
+              </View>
+
+              {/* 7. Ważny do */}
+              <View style={styles.fieldSection}>
+                <Text style={styles.label}>Ważny do:</Text>
+                <Text style={[styles.valueText]}>{ticketData.validityDate}</Text>
+              </View>
+
+              {/* 8. Numer bieżący */}
+              <View style={[styles.fieldSection, { marginTop: -5 }]}>
+                <Text style={styles.label}>Numer bieżący:</Text>
+                <Text style={[styles.valueText]}>{ticketData.currentNumber}</Text>
+              </View>
+
+              {/* 9. Numer kontrolny */}
+              <View style={[styles.fieldSection, { marginTop: -5 }]}>
+                <Text style={styles.label}>Numer kontrolny:</Text>
+                <Text style={[styles.valueText, styles.controlBox]}>{ticketData.controlNumber}</Text>
+              </View>
+
+              {/* 10. Latające logo gorzowa na CAŁĄ SZEROKOŚĆ EKRANU */}
+              <View style={[styles.bannerWrapper, bannerStyle, { marginTop: -7, marginBottom: 3 }]}>
+                <Animated.Image
+                  source={require('./assets/banner.png')}
+                  style={[styles.floatingLogo, { transform: [{ translateX }] }]}
+                />
+              </View>
+
+              {/* 11. Cena */}
+              <View style={styles.fieldSection}>
+                <Text style={styles.label}>Cena:</Text>
+                <Text style={[styles.valueText]}>5.00 PLN</Text>
+              </View>
+
+              {/* 12. Czas zakupu */}
+              <View style={[styles.fieldSection, { marginBottom: 20 }]}>
+                <Text style={styles.label}>Czas zakupu:</Text>
+                <Text style={styles.valueText}>{ticketData.buyDate}</Text>
+              </View>
+
+              {/* Przycisk Prolong ticket */}
+              <TouchableOpacity style={styles.prolongButton} activeOpacity={0.8}>
+                <Text style={styles.prolongButtonText}>Prolong ticket</Text>
+              </TouchableOpacity>
             </View>
-          </ImageBackground>
+          </ScrollView>
         </View>
       </View>
     </>
@@ -355,72 +363,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1161a6',
     touchAction: 'manipulation',
-    marginTop: 60
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingBottom: 30
-  },
-  qrCodeContainer: {
-    backgroundColor: '#fff',
-    padding: 15,
-    marginHorizontal: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ticketNumber: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: '400',
-    textAlign: 'center',
-    borderWidth: 1,
-    borderColor: 'white',
-    padding: 4,
-    marginTop: 25,
-    marginBottom: 5,
-  },
-  pageText: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: '400',
-  },
-  pageTitle: {
-    marginBottom: 32
-  },
-  pageSubtitle: {
-    fontSize: 13
+    backgroundColor: '#ffffff',
   },
   header: {
-    height: Platform.OS === 'ios' ? 94 : 40,
-    paddingTop: Platform.OS === 'ios' ? 44 : 0,
+    height: Platform.OS === 'ios' ? 106 : 64,
+    paddingTop: Platform.OS === 'ios' ? 54 : (Platform.OS === 'web' ? 16 : 12),
     backgroundColor: '#1161a6',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 1,
-    paddingBottom: 3,
+    paddingHorizontal: 10,
+    paddingBottom: 6,
     zIndex: 10,
-  },
-  subHeader: {
-    backgroundColor: '#1161a6',
-    paddingVertical: 9,
-    borderTopWidth: 0.5,
-    borderTopColor: '#064d89',
-    marginBottom: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  subHeaderText: {
-    color: '#ffffff',
-    fontSize: 17,
-    fontWeight: '400',
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 3,
     gap: 4,
     width: 120,
   },
@@ -437,7 +398,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
   },
   contentImage: {
     width: 100,
@@ -446,73 +407,88 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 120,
   },
-  content: {
+  scrollView: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
   },
-  backgroundImage: {
-    resizeMode: 'cover',
-    width: '100%',
-    height: '100%',
-    opacity: 1,
-    transform: [{ translateY: -20 }],
+  scrollContent: {
+    alignItems: 'center',
+    paddingVertical: 2,
+    paddingBottom: 40,
   },
-  contentContainer: {
-    flexGrow: 1,
-    scrollSnapType: 'x mandatory',
+  ticketContainer: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
-  bannerContainer: {
-    position: 'absolute',
-    top: 43, // Odsunięcie od góry (możesz dostosować)
-    zIndex: 20,
-    height: 80,
-    width: Dimensions.get('window').width - 40,
-    marginHorizontal: 20,
+  bannerWrapper: {
+    height: 48,
+    marginHorizontal: -14,
     overflow: 'hidden',
+    justifyContent: 'center',
+    marginTop: -2,
+    marginBottom: 15,
   },
   floatingLogo: {
-    position: 'absolute',
-
-    top: 0,
-    width: 60,
-    height: 50,
-    marginTop: -15,
+    width: 68,
+    height: 58,
     resizeMode: 'contain',
   },
-  qrContainer: {
+  qrSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 0,
-    padding: 0,
+    marginTop: 2,
+    marginBottom: 14,
   },
-  fakeQrWrapper: {
-    paddingHorizontal: 21,
-    paddingVertical: 13,
-    width: 246 + 38,
-    backgroundColor: '#bf0007',
-    marginBottom: 20,
-    alignItems: 'left',
-    justifyContent: 'flex-start',
-    marginTop: 0, // Kompensacja miejsca po wyrzuceniu bannera
+  fieldSection: {
+    marginBottom: 14,
   },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  label: {
+    color: '#000000',
+    fontSize: 12,
+    fontWeight: '100',
+    marginBottom: 4,
+  },
+  timerText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000000',
+    marginTop: -4,
+  },
+  valueTitle: {
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  valueText: {
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  highlightDate: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  controlBox: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  prolongButton: {
+    backgroundColor: '#1161a6',
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 0,
+    alignSelf: 'center',
     alignItems: 'center',
-    marginBottom: 20, // Bottom padding
+    justifyContent: 'center',
+    marginVertical: 8,
+    marginBottom: 35,
   },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 50,
-    backgroundColor: '#ccc',
-    marginHorizontal: 4,
-    overflow: 'hidden',
-    marginBottom: 35
-  },
-  activeDot: {
-    backgroundColor: '#555',
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 50,
+  prolongButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '400',
   },
 });

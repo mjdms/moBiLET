@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "start": "npx expo start",
+    "android": "npx expo start --android",
+    "ios": "npx expo start --ios",
+    "web": "npx expo start --web",
+    "build": "npx expo export --platform web && cp public/manifest.json dist/ && cp public/service-worker.js dist/ && cp public/mobilet.png dist/ && node pwa-inject.js"
   },
   "dependencies": {
     "expo": "~54.0.33",
