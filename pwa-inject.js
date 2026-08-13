@@ -50,19 +50,33 @@ if (fs.existsSync(indexPath)) {
 
   // 5. Ensure the root element background and mobile reset styles are consistent
   const resetStyles = `
-    html, body, #root {
-      background-color: #ffffff;
+    html {
+      height: -webkit-fill-available;
       height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      height: -webkit-fill-available;
       width: 100%;
       margin: 0;
       padding: 0;
-      overflow-x: hidden;
+      overflow: hidden;
+      background-color: #ffffff;
       -webkit-user-select: none;
       user-select: none;
       -webkit-touch-callout: none;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
       overscroll-behavior-y: none;
+    }
+    #root {
+      height: 100%;
+      height: -webkit-fill-available;
+      overflow: hidden;
+      background-color: #ffffff;
     }
   `;
   if (html.includes('</style>')) {

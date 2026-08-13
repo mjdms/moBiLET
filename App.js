@@ -141,7 +141,7 @@ export default function App() {
   const cardWidth = useMemo(() => Math.min(screenWidth * 0.96, 380), [screenWidth]);
   const translateX = useRef(new Animated.Value(-68)).current;
 
-  // Fix Safari iOS 100vh bug — use real window.innerHeight
+  // Fix Safari iOS body height bug — inject CSS and track real height
   const [windowHeight, setWindowHeight] = useState(
     Platform.OS === 'web' && typeof window !== 'undefined' ? window.innerHeight : null
   );
@@ -159,15 +159,40 @@ export default function App() {
         vp.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
         document.head.appendChild(vp);
       }
-      // Track real visible height (Safari toolbar changes it)
+
+      // THE REAL FIX: force html/body/root to fill Safari iOS properly
+      // -webkit-fill-available is the ONLY thing that works on Safari iOS
+      const style = document.createElement('style');
+      style.id = 'safari-height-fix';
+      style.textContent = `
+        html {
+          height: -webkit-fill-available;
+          height: 100%;
+        }
+        body {
+          min-height: 100vh;
+          min-height: -webkit-fill-available;
+          height: -webkit-fill-available;
+          margin: 0;
+          padding: 0;
+          overflow: hidden;
+        }
+        #root {
+          height: 100%;
+          height: -webkit-fill-available;
+          overflow: hidden;
+        }
+      `;
+      // Remove old if exists
+      const old = document.getElementById('safari-height-fix');
+      if (old) old.remove();
+      document.head.appendChild(style);
+
+      // Track real visible height
       const updateHeight = () => setWindowHeight(window.innerHeight);
       window.addEventListener('resize', updateHeight);
-      window.addEventListener('scroll', updateHeight);
       updateHeight();
-      return () => {
-        window.removeEventListener('resize', updateHeight);
-        window.removeEventListener('scroll', updateHeight);
-      };
+      return () => window.removeEventListener('resize', updateHeight);
     }
   }, []);
 
