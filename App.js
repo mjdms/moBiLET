@@ -141,13 +141,13 @@ export default function App() {
   const cardWidth = useMemo(() => Math.min(screenWidth * 0.96, 380), [screenWidth]);
   const translateX = useRef(new Animated.Value(-68)).current;
 
-  // Fix Safari iOS body height bug — inject CSS and track real height
-  const [windowHeight, setWindowHeight] = useState(
-    Platform.OS === 'web' && typeof window !== 'undefined' ? window.innerHeight : null
-  );
+  // Odczytaj safe area insets z CSS env() — jedyne prawidłowe rozwiązanie dla iOS PWA
+  const [safeTop, setSafeTop] = useState(0);
+  const [safeBottom, setSafeBottom] = useState(0);
+
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      // Ensure viewport-fit=cover
+      // Upewnij się że viewport-fit=cover jest ustawiony
       let vp = document.querySelector('meta[name="viewport"]');
       if (vp) {
         if (!vp.content.includes('viewport-fit=cover')) {
@@ -160,41 +160,29 @@ export default function App() {
         document.head.appendChild(vp);
       }
 
-      // THE REAL FIX: force html/body/root to fill Safari iOS properly
-      // -webkit-fill-available is the ONLY thing that works on Safari iOS
-      const style = document.createElement('style');
-      style.id = 'safari-height-fix';
-      style.textContent = `
-        html {
-          height: -webkit-fill-available;
-          height: 100%;
-        }
-        body {
-          min-height: 100vh;
-          min-height: -webkit-fill-available;
-          height: -webkit-fill-available;
-          margin: 0;
-          padding: 0;
-          overflow: hidden;
-        }
-        #root {
-          height: 100%;
-          height: -webkit-fill-available;
-          overflow: hidden;
-        }
+      // Odczytaj wartości env(safe-area-inset-*) przez pomocniczy element DOM
+      const probe = document.createElement('div');
+      probe.style.cssText = `
+        position: fixed;
+        top: env(safe-area-inset-top, 0px);
+        bottom: env(safe-area-inset-bottom, 0px);
+        left: env(safe-area-inset-left, 0px);
+        right: env(safe-area-inset-right, 0px);
+        pointer-events: none;
+        visibility: hidden;
       `;
-      // Remove old if exists
-      const old = document.getElementById('safari-height-fix');
-      if (old) old.remove();
-      document.head.appendChild(style);
+      document.body.appendChild(probe);
 
-      // Track real visible height
-      const updateHeight = () => setWindowHeight(window.innerHeight);
-      window.addEventListener('resize', updateHeight);
-      updateHeight();
-      return () => window.removeEventListener('resize', updateHeight);
+      const cs = window.getComputedStyle(probe);
+      const top = parseInt(cs.top) || 47;      // fallback: iPhone status bar
+      const bottom = parseInt(cs.bottom) || 34; // fallback: iPhone home indicator
+      document.body.removeChild(probe);
+
+      setSafeTop(top);
+      setSafeBottom(bottom);
     }
   }, []);
+
 
   const [cancellationTimeObj, setCancellationTimeObj] = useState(null);
   const [ticketData, setTicketData] = useState({
@@ -295,8 +283,8 @@ export default function App() {
       <StatusBar barStyle="light-content" backgroundColor="#1161a6" />
       <View style={styles.safeArea}>
         <View style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
+          {/* Header — paddingTop dynamicznie z env(safe-area-inset-top) */}
+          <View style={[styles.header, { paddingTop: safeTop + 8 }]}>
             <TouchableOpacity style={styles.backButton} activeOpacity={0.7}>
               <Image source={require('./assets/image.png')} style={styles.iconBack} />
               <Text style={styles.backText}>Back</Text>
@@ -310,7 +298,7 @@ export default function App() {
           {/* Single Scrollable Ticket Page */}
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: safeBottom + 16 }]}
             showsVerticalScrollIndicator={false}
           >
             <View style={[styles.ticketContainer, { width: cardWidth }]}>
@@ -427,7 +415,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   header: {
-    height: 106,
     paddingTop: 54,
     backgroundColor: '#1161a6',
     flexDirection: 'row',
