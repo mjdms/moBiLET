@@ -141,16 +141,23 @@ export default function App() {
   const cardWidth = useMemo(() => Math.min(screenWidth * 0.96, 380), [screenWidth]);
   const translateX = useRef(new Animated.Value(-68)).current;
 
-  // Detect iOS safe area bottom (home indicator)
-  const [safeBottom, setSafeBottom] = useState(0);
+  // Inject viewport-fit=cover + safe area bottom padding for iOS Safari/PWA
   useEffect(() => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const el = document.createElement('div');
-      el.style.paddingBottom = 'env(safe-area-inset-bottom)';
-      document.body.appendChild(el);
-      const val = parseInt(window.getComputedStyle(el).paddingBottom) || 34;
-      document.body.removeChild(el);
-      setSafeBottom(val);
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      // Ensure viewport-fit=cover is set
+      let vp = document.querySelector('meta[name="viewport"]');
+      if (vp) {
+        if (!vp.content.includes('viewport-fit=cover')) {
+          vp.content += ', viewport-fit=cover';
+        }
+      } else {
+        vp = document.createElement('meta');
+        vp.name = 'viewport';
+        vp.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+        document.head.appendChild(vp);
+      }
+      // Apply safe-area padding to body
+      document.body.style.paddingBottom = 'env(safe-area-inset-bottom, 34px)';
     }
   }, []);
 
@@ -268,7 +275,7 @@ export default function App() {
           {/* Single Scrollable Ticket Page */}
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: safeBottom + 20 }]}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: 60 }]}
             showsVerticalScrollIndicator={false}
           >
             <View style={[styles.ticketContainer, { width: cardWidth }]}>
@@ -457,7 +464,7 @@ const styles = StyleSheet.create({
   },
   label: {
     color: '#000000',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '100',
     marginBottom: 1,
   },
