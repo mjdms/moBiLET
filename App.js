@@ -361,7 +361,7 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#1161a6',
+    backgroundColor: '#ffffff',
     touchAction: 'manipulation',
   },
   container: {

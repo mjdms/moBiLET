@@ -51,7 +51,7 @@ if (fs.existsSync(indexPath)) {
   // 5. Ensure the root element background and mobile reset styles are consistent
   const resetStyles = `
     html, body, #root {
-      background-color: #1161a6;
+      background-color: #ffffff;
       height: 100%;
       width: 100%;
       margin: 0;

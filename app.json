@@ -25,7 +25,7 @@
     "web": {
       "bundler": "metro",
       "favicon": "./assets/mobilet.png",
-      "backgroundColor": "#1161a6",
+      "backgroundColor": "#ffffff",
       "themeColor": "#1161a6",
       "name": "moBiLET",
       "shortName": "moBiLET",
