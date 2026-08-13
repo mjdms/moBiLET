@@ -64,6 +64,10 @@ if (fs.existsSync(indexPath)) {
       touch-action: manipulation;
       overscroll-behavior-y: none;
     }
+    body {
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-bottom: constant(safe-area-inset-bottom);
+    }
   `;
   if (html.includes('</style>')) {
     html = html.replace('</style>', `${resetStyles}\n    </style>`);

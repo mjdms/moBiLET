@@ -141,6 +141,19 @@ export default function App() {
   const cardWidth = useMemo(() => Math.min(screenWidth * 0.96, 380), [screenWidth]);
   const translateX = useRef(new Animated.Value(-68)).current;
 
+  // Detect iOS safe area bottom (home indicator)
+  const [safeBottom, setSafeBottom] = useState(0);
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const el = document.createElement('div');
+      el.style.paddingBottom = 'env(safe-area-inset-bottom)';
+      document.body.appendChild(el);
+      const val = parseInt(window.getComputedStyle(el).paddingBottom) || 34;
+      document.body.removeChild(el);
+      setSafeBottom(val);
+    }
+  }, []);
+
   const [cancellationTimeObj, setCancellationTimeObj] = useState(null);
   const [ticketData, setTicketData] = useState({
     lineNum: '638',
@@ -255,7 +268,7 @@ export default function App() {
           {/* Single Scrollable Ticket Page */}
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: safeBottom + 20 }]}
             showsVerticalScrollIndicator={false}
           >
             <View style={[styles.ticketContainer, { width: cardWidth }]}>
@@ -414,7 +427,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     alignItems: 'center',
     paddingVertical: 2,
-    paddingBottom: 100,
   },
   ticketContainer: {
     backgroundColor: '#ffffff',
@@ -447,7 +459,7 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 12,
     fontWeight: '100',
-    marginBottom: 4,
+    marginBottom: 1,
   },
   timerText: {
     fontSize: 16,
@@ -477,18 +489,18 @@ const styles = StyleSheet.create({
   },
   prolongButton: {
     backgroundColor: '#1161a6',
-    paddingVertical: 10,
-    paddingHorizontal: 30,
+    paddingVertical: 13,
+    paddingHorizontal: 42,
     borderRadius: 0,
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 8,
-    marginBottom: 35,
+    marginBottom: 20,
   },
   prolongButtonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '400',
   },
 });
