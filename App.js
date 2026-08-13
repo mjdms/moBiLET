@@ -141,9 +141,13 @@ export default function App() {
   const cardWidth = useMemo(() => Math.min(screenWidth * 0.96, 380), [screenWidth]);
   const translateX = useRef(new Animated.Value(-68)).current;
 
-  // Ensure viewport-fit=cover meta tag
+  // Fix Safari iOS 100vh bug — use real window.innerHeight
+  const [windowHeight, setWindowHeight] = useState(
+    Platform.OS === 'web' && typeof window !== 'undefined' ? window.innerHeight : null
+  );
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      // Ensure viewport-fit=cover
       let vp = document.querySelector('meta[name="viewport"]');
       if (vp) {
         if (!vp.content.includes('viewport-fit=cover')) {
@@ -155,6 +159,15 @@ export default function App() {
         vp.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
         document.head.appendChild(vp);
       }
+      // Track real visible height (Safari toolbar changes it)
+      const updateHeight = () => setWindowHeight(window.innerHeight);
+      window.addEventListener('resize', updateHeight);
+      window.addEventListener('scroll', updateHeight);
+      updateHeight();
+      return () => {
+        window.removeEventListener('resize', updateHeight);
+        window.removeEventListener('scroll', updateHeight);
+      };
     }
   }, []);
 
@@ -255,7 +268,7 @@ export default function App() {
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="#1161a6" />
-      <View style={styles.safeArea}>
+      <View style={[styles.safeArea, windowHeight ? { height: windowHeight } : {}]}>
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
