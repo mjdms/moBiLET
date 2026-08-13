@@ -141,10 +141,9 @@ export default function App() {
   const cardWidth = useMemo(() => Math.min(screenWidth * 0.96, 380), [screenWidth]);
   const translateX = useRef(new Animated.Value(-68)).current;
 
-  // Inject viewport-fit=cover + safe area bottom padding for iOS Safari/PWA
+  // Ensure viewport-fit=cover meta tag
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      // Ensure viewport-fit=cover is set
       let vp = document.querySelector('meta[name="viewport"]');
       if (vp) {
         if (!vp.content.includes('viewport-fit=cover')) {
@@ -156,8 +155,6 @@ export default function App() {
         vp.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
         document.head.appendChild(vp);
       }
-      // Apply safe-area padding to body
-      document.body.style.paddingBottom = 'env(safe-area-inset-bottom, 34px)';
     }
   }, []);
 
@@ -275,7 +272,7 @@ export default function App() {
           {/* Single Scrollable Ticket Page */}
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: 60 }]}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
             showsVerticalScrollIndicator={false}
           >
             <View style={[styles.ticketContainer, { width: cardWidth }]}>
@@ -463,9 +460,9 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   label: {
-    color: '#000000',
-    fontSize: 11,
-    fontWeight: '100',
+    color: '#999999',
+    fontSize: 12,
+    fontWeight: '400',
     marginBottom: 1,
   },
   timerText: {
