@@ -293,7 +293,7 @@ export default function App() {
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="#1161a6" />
-      <View style={[styles.safeArea, windowHeight ? { height: windowHeight } : {}]}>
+      <View style={styles.safeArea}>
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
@@ -415,9 +415,12 @@ export default function App() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: '#ffffff',
-    touchAction: 'manipulation',
   },
   container: {
     flex: 1,
