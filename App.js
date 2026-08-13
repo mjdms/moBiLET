@@ -369,14 +369,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   header: {
-    height: Platform.OS === 'ios' ? 106 : 64,
-    paddingTop: Platform.OS === 'ios' ? 54 : (Platform.OS === 'web' ? 16 : 12),
+    height: 106,
+    paddingTop: 54,
     backgroundColor: '#1161a6',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 10,
-    paddingBottom: 6,
+    paddingBottom: 8,
     zIndex: 10,
   },
   backButton: {
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     alignItems: 'center',
     paddingVertical: 2,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   ticketContainer: {
     backgroundColor: '#ffffff',
